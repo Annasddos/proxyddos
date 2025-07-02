@@ -1,28 +1,31 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Payment Gateway</title>
+    <title>Premium Payment Gateway | Kece Abis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
 <body>
+
     <div class="splash-screen" id="splashScreen">
-        <img src="https://files.catbox.moe/itsetz.jpg" alt="Logo" class="splash-screen-logo" width="100" height="100">
-        <p>Loading Awesome Experience...</p>
+        <img src="https://files.catbox.moe/itsetz.jpg" alt="Welcome Logo" class="splash-screen-logo" width="120" height="120">
+        <p class="loading-text">Preparing Your Premium Experience...</p>
     </div>
 
     <div class="login-register-container" id="loginRegisterContainer">
         <h2 id="formTitle">Login</h2>
-        <input type="text" id="usernameInput" placeholder="Username" required>
-        <input type="password" id="passwordInput" placeholder="Password" required>
+        <input type="text" id="usernameInput" placeholder="Username" required autocomplete="username">
+        <input type="password" id="passwordInput" placeholder="Password" required autocomplete="current-password">
         <button id="authButton">Login</button>
         <p class="register-link" id="toggleAuthMode">Belum punya akun? Buat akun baru</p>
     </div>
 
     <div class="particles-container" id="particles"></div>
+
     <button class="theme-toggle" aria-label="Toggle dark mode">
         <div class="toggle-track">
             <div class="toggle-thumb"></div>
@@ -33,7 +36,8 @@
         </div>
     </button>
 
-    <main class="container" style="display: none;"> <section class="intro-screen" id="introScreen">
+    <main class="container" style="display: none;">
+        <section class="intro-screen" id="introScreen">
             <div class="intro-card">
                 <div class="card-glow"></div>
                 <div class="profile-section">
@@ -204,7 +208,7 @@
         </aside>
     </main>
 
-    <div class="user-status-section">
+    <div class="user-status-section" id="userStatusSection">
         <span class="user-status-indicator" id="myStatusIndicator"></span>
         <span>ID Saya: <strong id="myUserId"></strong></span>
         <span style="margin-left: 15px;">Pengguna Lain: <span id="otherUsersStatus">Checking...</span></span>
@@ -227,7 +231,8 @@
         </div>
     </div>
 
-    <script src="app.js"></script> <audio id="gatewayAudio" preload="auto">
+    <script src="app.js"></script>
+    <audio id="gatewayAudio" preload="auto">
         <source src="https://files.catbox.moe/6j7rug.mp3" type="audio/mp4">
     </audio>
 
