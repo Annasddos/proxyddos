@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Payment Gateway | Kece Abis</title>
+    <title>Premium Payment Gateway | KepfoЯannaS Official</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="splash-screen" id="splashScreen">
-        <img src="https://files.catbox.moe/itsetz.jpg" alt="Welcome Logo" class="splash-screen-logo" width="120" height="120">
-        <p class="loading-text">Preparing Your Premium Experience...</p>
+        <div class="splash-logo-wrapper">
+            <img src="https://files.catbox.moe/zams2g.jpeg" alt="Welcome Logo" class="splash-screen-logo" width="120" height="120">
+            <div class="logo-circle-glow"></div>
+        </div>
+        <p class="loading-text">Loading the Ultimate Experience...</p>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
     </div>
 
     <div class="login-register-container" id="loginRegisterContainer">
@@ -44,16 +50,15 @@
                     <div class="profile-photo">
                         <div class="profile-ring"></div>
                         <div class="profile-avatar">
-                            <img src="https://files.catbox.moe/itsetz.jpg" alt="Profile Photo" class="profile-image" />
+                            <img src="https://files.catbox.moe/zams2g.jpeg" alt="Profile Photo" class="profile-image" />
                         </div>
                     </div>
                     <div class="status-badge">Premium</div>
                 </div>
 
                 <h1 class="name">
-                    <span class="name-gradient">Painzy Attaki</span>
-                </h1>
-                <p class="bio">Secure digital payment specialist providing seamless transaction experiences with cutting-edge technology and enterprise-grade security.</p>
+                    <span class="name-gradient">KepfoЯannaS</span> </h1>
+                <p class="bio">Secure digital payment specialist providing seamless transaction experiences with cutting-edge technology and enterprise-grade security. Elevating your financial freedom with style!</p>
 
                 <div class="stats-grid">
                     <div class="stat-item">
@@ -76,7 +81,20 @@
                         <svg class="button-icon" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
                         </svg>
-                        Go to payment method
+                        Go to Payment Methods
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                        </svg>
+                    </span>
+                </button>
+
+                <button class="cta-button sosmed-button" id="openSosmedSlide">
+                    <span class="button-bg"></span>
+                    <span class="button-content">
+                        <svg class="button-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                        </svg>
+                        Connect via Social Media
                         <svg class="arrow-icon" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
                         </svg>
@@ -206,15 +224,59 @@
                 </div>
             </div>
         </aside>
+
+        <aside class="payment-slide social-media-slide" id="socialMediaSlide">
+            <div class="slide-backdrop"></div>
+            <div class="slide-content">
+                <div class="slide-header">
+                    <button class="close-button" id="closeSosmedSlide" aria-label="Close social media">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                    <div class="slide-title-section">
+                        <h2 class="slide-title">Connect with Us!</h2>
+                        <p class="slide-subtitle">Find us on your favorite platforms.</p>
+                    </div>
+                </div>
+
+                <div class="social-links-grid">
+                    <a href="https://wa.me/6283173814158" target="_blank" class="social-link-card whatsapp-card">
+                        <div class="card-shine"></div>
+                        <div class="social-icon-large">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+                        </div>
+                        <span class="social-name">WhatsApp Chat</span>
+                    </a>
+                    <a href="https://t.me/Alpooooooofoluv" target="_blank" class="social-link-card telegram-card">
+                        <div class="card-shine"></div>
+                        <div class="social-icon-large">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram">
+                        </div>
+                        <span class="social-name">Telegram Chat</span>
+                    </a>
+                    <a href="https://t.me/YOUR_TELEGRAM_CHANNEL" target="_blank" class="social-link-card telegram-channel-card">
+                        <div class="card-shine"></div>
+                        <div class="social-icon-large">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram Channel">
+                        </div>
+                        <span class="social-name">Telegram Channel</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
     </main>
 
     <div class="user-status-section" id="userStatusSection">
         <span class="user-status-indicator" id="myStatusIndicator"></span>
-        <span>ID Saya: <strong id="myUserId"></strong></span>
-        <span style="margin-left: 15px;">Pengguna Lain: <span id="otherUsersStatus">Checking...</span></span>
+        <div class="status-info">
+            <span>ID Saya: <strong id="myUserId"></strong></span>
+            <span>Pengguna Lain: <span id="otherUsersStatus">Checking...</span></span>
+        </div>
     </div>
 
-    <div class="social-media-container">
+    <div class="social-media-container fixed-top-right">
         <a href="https://wa.me/6283173814158" target="_blank" class="social-media-icon" aria-label="WhatsApp">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
         </a>
