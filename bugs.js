@@ -1,130 +1,67 @@
-// bugs.js
+const axios = require('axios');
+const path = require('path');
+const fs = require('fs');
+const { sendTelegramNotification } = require('./telegram'); // Impor fungsi notifikasi Telegram
 
-const {
-    default: makeWASocket,   
-    prepareWAMessageMedia,   
-    removeAuthState,  
-    useMultiFileAuthState,   
-    DisconnectReason,   
-    fetchLatestBaileysVersion,   
-    makeInMemoryStore,   
-    generateWAMessageFromContent,   
-    generateWAMessageContent,   
-    generateWAMessage,  
-    jidDecode,   
-    proto,   
-    delay,  
-    relayWAMessage,   
-    getContentType,   
-    generateMessageTag,  
-    getAggregateVotesInPollMessage,   
-    downloadContentFromMessage,   
-    fetchLatestWaWebVersion,   
-    InteractiveMessage,   
-    makeCacheableSignalKeyStore,   
-    Browsers,   
-    generateForwardMessageContent,   
-    MessageRetryMap 
-} = require("@whiskeysockets/baileys"); 
-
-const fs = require('fs');  
-const path = require('path'); 
-
-// Pastikan path ke ImgCrL.jpg benar relatif terhadap lokasi index.js (root backend Anda)
-const ImgCrLPath = path.join(process.cwd(), 'ImgCrL.jpg'); // Ini mencari di root proyek
-let ImgCrL;
-try {
-    ImgCrL = fs.readFileSync(ImgCrLPath);
-    console.log(`[Bugs Service] ImgCrL.jpg loaded from: ${ImgCrLPath}`);
-} catch (e) {
-    console.error(`[Bugs Service Error] Failed to load ImgCrL.jpg from ${ImgCrLPath}. Please ensure the image exists at the backend root. Error:`, e.message);
-    ImgCrL = Buffer.from(""); // Fallback to empty buffer
+// Fungsi untuk mendapatkan gambar ImgCrL.jpg
+function getImgCrLLocalPath() {
+    return path.join(__dirname, 'ImgCrL.jpg');
 }
 
+// Fungsi untuk mengirim pesan bug ke WhatsApp
+async function sendBugMessage(client, recipient, bugType, osType) {
+    let message = `*BUG REPORT*\n\n`;
+    message += `Type: ${bugType}\n`;
+    message += `OS: ${osType}\n`;
+    message += `Time: ${new Date().toLocaleString('id-ID')}\n\n`;
+    message += `_This is an automated bug report from KepfoЯannaS's system._`;
 
-/**
- * Sends a simulated "carousels" bug message.
- * @param {object} client - The Baileys WhatsApp client instance.
- * @param {string} targetJid - The JID of the target.
- * @param {string} targetOs - The target OS ('ios' or 'android').
- */
-async function carousels2(client, targetJid, targetOs) {
-    console.log(`[Bugs Service] Attempting to send carousels (pairing code sim.) to ${targetJid} for OS: ${targetOs}`);
-
-    const messageId = generateMessageTag();
-
-    let mediaContent;
-    if (ImgCrL && ImgCrL.length > 0) {
-        mediaContent = await prepareWAMessageMedia({ image: ImgCrL }, { upload: client.waUploadToServer });
-    } else {
-        throw new Error("Carousel image (ImgCrL.jpg) not loaded. Cannot send interactive message with image header.");
-    }
-    
-    const interactiveMessage = {
-        body: {
-            text: `System Alert: Pairing Request for ${targetOs.toUpperCase()} device.`,
-            footerText: "KyuuRzy Bug Panel - Experimental Feature"
-        },
-        header: {
-            hasMediaAttachment: true, // Use hasMediaAttachment for header image
-            imageMessage: mediaContent.image,
-            caption: "Please verify device pairing"
-        },
-        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
-            buttons: [
-                {
-                    name: "quick_reply",
-                    buttonParamsJson: JSON.stringify({
-                        display_text: "Accept Pairing",
-                        id: "ACCEPT_PAIRING_123"
-                    }),
-                },
-                {
-                    name: "quick_reply",
-                    buttonParamsJson: JSON.stringify({
-                        display_text: "Decline",
-                        id: "DECLINE_PAIRING_XYZ"
-                    }),
-                },
-            ],
-        }),
-    };
-
-    const msg = generateWAMessageFromContent(targetJid, {
-        interactiveMessage,
-        extendedTextMessage: {
-            text: "This is a simulated system alert from KepfoЯannaS. Please review the details.",
-            contextInfo: {}
+    try {
+        // Cek apakah file ImgCrL.jpg ada
+        const imagePath = getImgCrLLocalPath();
+        if (fs.existsSync(imagePath)) {
+            await client.sendMessage(recipient, {
+                image: { url: imagePath },
+                caption: message
+            });
+            console.log(`Bug message with image sent to ${recipient}`);
+        } else {
+            // Jika gambar tidak ada, kirim pesan teks saja
+            await client.sendMessage(recipient, { text: message });
+            console.log(`Bug message (text only, image not found) sent to ${recipient}`);
         }
-    }, { quoted: null, messageId }); 
 
-    await client.relayMessage(targetJid, msg.message, { messageId: msg.key.id });
+        // Kirim notifikasi ke Telegram
+        const telegramMessage = `[BUG REPORT - WA Bot]\nType: ${bugType}\nOS: ${osType}\nRecipient: ${recipient}\nTime: ${new Date().toLocaleString('id-ID')}`;
+        await sendTelegramNotification(telegramMessage);
 
-    console.log(`[Bugs Service] Successfully sent a simulated carousel/interactive message to ${targetJid}.`);
+        return { status: 'success', message: 'Bug message sent successfully.' };
+    } catch (error) {
+        console.error("Error sending bug message:", error);
+        return { status: 'error', message: 'Failed to send bug message.' };
+    }
 }
 
-/**
- * Sends a simulated "force call" message.
- * @param {object} client - The Baileys WhatsApp client instance.
- * @param {string} targetJid - The JID of the target.
- */
-async function forceCall(client, targetJid) {
-    console.log(`[Bugs Service] Attempting to send force call to ${targetJid}`);
-    
-    // Simulate initiating a video call
-    const callOffer = await client.relayMessage(targetJid, {
-        call: {
-            callKey: Buffer.from("".padStart(26, Math.random().toString(36).substring(2, 10))), 
-            offer: {
-                callId: generateMessageTag(), 
-                callType: proto.Message.Call.CallType.VIDEO, 
-                isGroup: false, 
-            },
-        },
-    }, { messageId: generateMessageTag() }); 
+// Fungsi untuk memperbarui status bug
+function updateBugStatus(status, os) {
+    global.bug_status = status;
+    global.bug_os = os;
+    global.bug_last_checked = new Date().toISOString();
+    console.log(`Bug status updated: ${status} on ${os}`);
+    return { status: 'success', message: 'Bug status updated.' };
+}
 
-    console.log(`[Bugs Service] Call initiation message relayed for ${targetJid}.`);
-    await delay(1000); 
-} 
+// Fungsi untuk mendapatkan status bug
+function getBugStatus() {
+    return {
+        status: global.bug_status,
+        os: global.bug_os,
+        lastChecked: global.bug_last_checked
+    };
+}
 
-module.exports = { forceCall, carousels2 };
+module.exports = {
+    sendBugMessage,
+    updateBugStatus,
+    getBugStatus
+};
