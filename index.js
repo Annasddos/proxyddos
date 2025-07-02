@@ -57,7 +57,7 @@ app.use(bodyParser.raw({
   type: '*/*'   
 }));  
 
-const usePairingCode = true; 
+const usePairingCode = false; 
 
 const question = (text) => {
     const rl = readline.createInterface({
