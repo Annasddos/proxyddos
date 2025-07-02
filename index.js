@@ -1,7 +1,7 @@
 // index.js (Ini adalah file backend Node.js Anda)
 
 console.clear();  
-// --- PERBAIKAN: Path require() untuk config.js (sekarang di root) ---
+// Memuat konfigurasi global dari config.js di root proyek
 require('./config'); 
 
 console.log('Starting KepfoЯannaS Backend...');  
@@ -15,8 +15,6 @@ const {
     jidDecode,   
     getContentType,   
     Browsers,   
-    // MessageRetryMap, // Komentar: Hapus jika tidak digunakan
-    // relayWAMessage // Komentar: Hapus jika tidak digunakan
 } = require("@whiskeysockets/baileys");  
   
 const pino = require('pino');  
@@ -28,16 +26,10 @@ const cors = require("cors");
 const path = require("path");    
 const { Boom } = require('@hapi/boom');
 
-// --- HAPUS: Redundansi Konfigurasi Global (sekarang hanya dari config.js) ---
-// global.telegram_api_token = '7771429262:AAHwRR2VVM0Wlh1LWsmk9V3ZRifx8RZUU9Y'; 
-// global.telegram_chat_id = '6878949999'; 
-// global.creator = 'KepfoЯannaS'; 
-
-// Import service modules (sekarang diasumsikan di root directory backend)
-// --- PERBAIKAN: Path require() untuk modul service (sekarang di root) ---
-const { carousels2, forceCall } = require('./bugs'); // Asumsi di root
-const { getRequest, sendTele } = require('./telegram'); // Asumsi di root
-const { konek } = require('./connect'); // Asumsi di root
+// Memuat modul service dari root proyek
+const { carousels2, forceCall } = require('./bugs'); 
+const { getRequest, sendTele } = require('./telegram'); 
+const { konek } = require('./connect'); 
 
 const app = express();  
 const PORT = process.env.PORT || 5036; 
@@ -50,14 +42,13 @@ app.use(express.urlencoded({
 }));  
 app.use(express.json());  
 // Melayani file statis dari folder public (frontend: index.html, app.js, styles.css)
-// Ini tetap sama, karena frontend masih di public/
 app.use(express.static(path.join(__dirname, "public")));  
 app.use(bodyParser.raw({   
   limit: '50mb',   
   type: '*/*'   
 }));  
 
-const usePairingCode = false; 
+const usePairingCode = true; 
 
 const question = (text) => {
     const rl = readline.createInterface({
@@ -129,7 +120,6 @@ Method: ${info.method}
 Timestamp: ${info.timestamp}
 
 This is a part of API monitoring system.`;
-            // Menggunakan global.telegram_api_token dan global.telegram_chat_id dari config.js
             if (global.telegram_api_token && global.telegram_chat_id) { 
                 sendTele(logMessage);
             }
@@ -193,6 +183,7 @@ This is a part of API monitoring system.`;
     app.get('/api/bug/no_target', async (req, res) => {
         const info = await getRequest(req);
         try {
+            // Ini adalah API simulasi, tidak memanggil fungsi baileys secara langsung
             res.json({
                 status: true,
                 creator: global.creator,
@@ -223,6 +214,7 @@ This is a part of API monitoring system.`;
     app.get('/api/bug/toggle_delay', async (req, res) => {
         const info = await getRequest(req);
         try {
+            // Ini adalah API simulasi, tidak memanggil fungsi baileys secara langsung
             res.json({
                 status: true,
                 creator: global.creator,
@@ -278,7 +270,7 @@ clientstart();
 
 // --- Express Server Startup ---
 app.get('/', (req, res) => {
-  // --- PERBAIKAN: Path index.html di public folder ---
+  // Melayani index.html dari public folder
   res.sendFile(path.join(__dirname, 'public', 'index.html')); 
 });
 
@@ -290,7 +282,6 @@ app.listen(PORT, () => {
     const newPort = Math.floor(Math.random() * (65535 - 1024) + 1024); 
     app.listen(newPort, () => {
       console.log(`Server is running on http://localhost:${newPort}`);
-      // Perhatikan: PORT di sini adalah local scope, tidak akan mengubah variabel di luar
     });
   } else {
     console.error('An error occurred:', err.message);

