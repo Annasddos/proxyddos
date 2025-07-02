@@ -81,10 +81,11 @@ body {
   overflow-x: hidden;
   line-height: 1.6;
   /* Mencegah scroll saat slide pembayaran aktif */
-  &.payment-slide-active {
-    overflow: hidden;
-  }
 }
+body.payment-slide-active {
+  overflow: hidden;
+}
+
 
 /* --- Splash Screen --- */
 .splash-screen {
@@ -898,6 +899,16 @@ body {
     z-index: 999;
     box-shadow: var(--shadow-lg);
     transition: all 0.3s ease;
+    /* Penyesuaian untuk mobile agar tidak bertabrakan dengan menu bawah */
+    @media (max-width: 768px) {
+        bottom: 70px; /* Geser ke atas agar tidak tertutup oleh bar browser */
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 40px); /* Agak menyempit di mobile */
+        text-align: center;
+        justify-content: center;
+        flex-wrap: wrap; /* Izinkan wrap jika teks terlalu panjang */
+    }
 }
 
 .user-status-section strong {
@@ -932,11 +943,6 @@ body {
     display: flex;
     gap: 15px;
     z-index: 999;
-    /* Tambahkan media query untuk tumpang tindih dengan theme-toggle pada layar kecil */
-    @media (max-width: 768px) {
-        top: 5rem; /* Pindahkan sedikit ke bawah agar tidak tumpang tindih */
-        right: 1rem;
-    }
 }
 
 .social-media-icon {
@@ -1081,19 +1087,19 @@ body {
   0%,
   100% {
     transform: translateY(0) translateX(0) rotate(0deg) scale(1);
-    opacity: 0.7;
+    opacity: var(--particle-opacity, 0.7); /* Default jika JS belum set */
   }
   25% {
     transform: translateY(-10px) translateX(10px) rotate(90deg) scale(0.9);
-    opacity: 0.8;
+    opacity: var(--particle-opacity, 0.8);
   }
   50% {
     transform: translateY(-20px) translateX(-10px) rotate(180deg) scale(1.1);
-    opacity: 1;
+    opacity: var(--particle-opacity, 1);
   }
   75% {
     transform: translateY(-10px) translateX(10px) rotate(270deg) scale(0.9);
-    opacity: 0.8;
+    opacity: var(--particle-opacity, 0.8);
   }
 }
 
@@ -1134,10 +1140,10 @@ body {
     transform: translateX(100%); /* Masih tersembunyi awal */
     grid-column: 2;
     height: 100vh;
-    /* Pastikan slide menutupi seluruh area grid column 2 saat aktif */
-    &.active {
-      transform: translateX(0);
-    }
+  }
+
+  .payment-slide.active {
+    transform: translateX(0);
   }
 
   .slide-content {
@@ -1158,6 +1164,75 @@ body {
       right: calc(35% + 2rem); /* Geser ke kiri agar tidak menutupi payment slide */
   }
 }
+
+/* Penyesuaian khusus untuk layar sangat kecil / mobile */
+@media (max-width: 768px) {
+    /* Atur ulang posisi theme toggle agar tidak tumpang tindih dengan social media */
+    .theme-toggle {
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .social-media-container {
+        top: 1rem; /* Posisi relatif ke atas */
+        left: 1rem; /* Pindah ke kiri atas */
+        right: auto; /* Hapus right default */
+        gap: 10px; /* Kurangi jarak antar ikon */
+    }
+    
+    .social-media-icon {
+        width: 38px; /* Kecilkan sedikit ikon */
+        height: 38px;
+    }
+
+    .social-media-icon img {
+        width: 70%; /* Pertahankan ukuran gambar di dalam ikon */
+        height: 70%;
+    }
+
+    /* Pastikan gambar WhatsApp tidak besar */
+    .social-media-container .social-media-icon img[alt="WhatsApp"] {
+        width: 70%; /* Atur ulang ukuran spesifik untuk gambar WhatsApp */
+        height: 70%;
+    }
+
+    /* Atur ulang posisi dan lebar login form agar terlihat baik di mobile */
+    .login-register-container {
+        padding: 25px;
+        border-radius: 15px;
+        width: calc(100% - 40px); /* 20px padding kiri/kanan */
+    }
+
+    .login-register-container h2 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+
+    .login-register-container input {
+        padding: 12px;
+        margin-bottom: 15px;
+        font-size: 1em;
+    }
+
+    .login-register-container button {
+        padding: 12px;
+        font-size: 1.1em;
+    }
+
+    .register-link {
+        margin-top: 15px;
+        font-size: 0.9em;
+    }
+
+    .splash-screen p {
+        font-size: 1.5em; /* Kecilkan teks loading di mobile */
+    }
+    .splash-screen-logo {
+        width: 80px; /* Kecilkan logo di splash screen mobile */
+        height: 80px;
+    }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   * {

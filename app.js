@@ -51,7 +51,7 @@ function updateOtherUsersStatus() {
 }
 
 // Fungsi untuk menampilkan toast notifikasi
-function showToast(title, message, iconClass = 'success') {
+function showToast(title, message, iconClass = 'info') { // Default iconClass diubah ke 'info'
     const toast = document.getElementById('toast');
     if (!toast) return;
 
@@ -61,7 +61,7 @@ function showToast(title, message, iconClass = 'success') {
     const toastIcon = toast.querySelector('.toast-icon');
     toastIcon.className = 'toast-icon'; // Reset class
     if (iconClass) {
-        toastIcon.classList.add(iconClass);
+        toastIcon.classList.add(iconClass); // Tambahkan iconClass yang baru
     }
     
     toast.classList.add('show');
@@ -95,7 +95,8 @@ function createParticles() {
         
         // Durasi animasi acak
         const animationDuration = Math.random() * 10 + 6; // Durasi antara 6s dan 16s
-        particle.style.animationDuration = `${animationDuration}s`;
+        particle.style.setProperty('--animation-duration', `${animationDuration}s`); // Set CSS variable
+        particle.style.setProperty('--particle-opacity', `${Math.random() * 0.4 + 0.6}`); // Set CSS variable for varying opacity
 
         particlesContainer.appendChild(particle);
     }
@@ -245,7 +246,7 @@ document.querySelectorAll('.status-toggle').forEach(button => {
             statusText.textContent = 'Ready';
             statusIndicator.classList.remove('not-ready');
             statusIndicator.classList.add('ready');
-            if (copyButton) copyButton.disabled = true; // Aktifkan tombol copy
+            if (copyButton) copyButton.disabled = false; // Aktifkan tombol copy
             showToast('Status Diperbarui', 'Metode pembayaran menjadi Siap.', 'success');
         }
     });
