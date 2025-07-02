@@ -6,12 +6,12 @@ global.creator = "@bebas";
 // Telegram Bot API Token
 // Ganti 'YOUR_TELEGRAM_BOT_API_TOKEN_HERE' dengan token bot Telegram Anda yang sebenarnya.
 // Dapatkan dari @BotFather di Telegram.
-global.telegram_api_token = "TOKEN BOT"; // <-- Ganti ini
+global.telegram_api_token = " 7771429262:AAHwRR2VVM0Wlh1LWsmk9V3ZRifx8RZUU9Y"; // <-- Ganti ini
 
 // Telegram Chat ID
 // Ganti 'YOUR_TELEGRAM_CHAT_ID_HERE' dengan ID chat pribadi atau grup Anda
 // tempat Anda ingin menerima notifikasi.
-global.telegram_chat_id = "USER ID"; // <-- Ganti ini
+global.telegram_chat_id = " 6878949999"; // <-- Ganti ini
 
 // Watermark for various uses (e.g., messages sent by bot)
 global.watermark = "© bebas"; 

